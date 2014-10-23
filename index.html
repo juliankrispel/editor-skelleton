@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+<title>Basic Example</title>
+<style>
+*.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+
+   /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+   -ms-user-select: none;
+   user-select: none;
+}
+</style>
+</head>
+<body>
+<div id="editor" contenteditable></div>
+<script src="react-with-addons.js"></script>
+<script src="node_modules/baconjs/dist/Bacon.js"></script>
+<script src="node_modules/lodash/dist/lodash.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
