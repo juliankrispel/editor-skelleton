@@ -3,6 +3,17 @@ var isFocused = false;
 var keyups = Bacon.fromEventTarget(document.body, 'keyup');
 var keydowns = Bacon.fromEventTarget(document.body, 'keydown');
 var blurWindow = Bacon.fromEventTarget(window, 'blur');
+var selectionChanges = Bacon.fromEventTarget(document, 'selectionchange');
+var caretChanges = selectionChanges.filter('.type', 'Caret');
+
+caretChanges.assign(function(e){
+    var selection = window.getSelection();
+    var parentNode = selection.baseNode.parentNode;
+    if(selection.type === 'Caret' && parentNode.dataset !== undefined && parentNode.dataset.index !== undefined){
+        cursor[0] = parseInt(parentNode.dataset.index);
+        cursor[1] = selection.baseOffset;
+    }
+});
 
 var isEqual = function(a,b){
     return a.keyCode == b.keyCode && a.type == b.type;
@@ -15,7 +26,7 @@ var keysPressed = Bacon.mergeAll(keyups, keydowns, blurWindow)
         if(e.type === 'keyup' || e.type === 'blur' && index > -1){
             keys = [];
         }else if(e.type === 'keydown' && index === -1){
-                keys.push(e.keyCode);
+            keys.push(e.keyCode);
         }
         return keys;
     });
