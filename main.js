@@ -121,6 +121,7 @@ var keyMap = {
     '191': '/',
     '16+191': '?'
 };
+
 var nonInput = ['ctrl', 'backspace', 'enter', 'tabslock', 'tab'];
 
 var doc = [];
@@ -139,7 +140,6 @@ var commands = {
         var extentIndex = extentNode.dataset.index;
         var baseNode = userSelection.baseNode.parentNode;
         var baseIndex = baseNode.dataset.index;
-        cursor = [extentNode, ]
 
         var extentOffset = userSelection.extentOffset;
         var baseOffset = userSelection.baseOffset;
@@ -204,6 +204,7 @@ var commands = {
         cursor[1] = 0;
         nodeName = nodeName || 'p';
         doc.splice(cursor[0], 0, {nodeName: nodeName, textContent: ''});
+        render();
     },
     insert: function(val){
         if(doc.length <= 0){
@@ -240,8 +241,23 @@ $editor.addEventListener('focus', function(e){
     isFocused = true;
 });
 
+var setCursor = function(el, position){
+    var range = document.createRange();
+    var sel = window.getSelection();
+    var hasTextNode = el.childNodes.length > 0;
+    if(hasTextNode){
+        range.setStart(el.childNodes[0], position);
+    }else{
+        el.innerHTML = '&#8203';
+        range.setStart(el.childNodes[0], position);
+    }
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+};
+
 var render = function(){
-    console.log(cursor);
     $editor.innerHTML = '';
     _.each(doc, function(element, i){
         var el = document.createElement(element.nodeName);
@@ -253,7 +269,11 @@ var render = function(){
         extraEl.className = 'unselectable';
         $editor.appendChild(extraEl);
         $editor.appendChild(el);
+        if(i === cursor[0]){
+            setCursor(el, cursor[1]);
+        }
     });
+
 };
 
 $editor.addEventListener('blur', function(e){
