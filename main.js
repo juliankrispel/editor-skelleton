@@ -6,6 +6,16 @@ var blurWindow = Bacon.fromEventTarget(window, 'blur');
 var selectionChanges = Bacon.fromEventTarget(document, 'selectionchange');
 var caretChanges = selectionChanges.filter('.type', 'Caret');
 
+var filterMappedKeys = function(keys){
+    return Object.keys(keyMap).indexOf(keys.map(function(e){ return e.keyCode; }).join('+')) > -1;
+};
+
+var not = function(func){
+    return function(){
+        return !func.apply(this, arguments);
+    };
+};
+
 caretChanges.assign(function(e){
     var selection = window.getSelection();
     var parentNode = selection.baseNode.parentNode;
@@ -20,16 +30,25 @@ var isEqual = function(a,b){
 };
 
 var keysPressed = Bacon.mergeAll(keyups, keydowns, blurWindow)
-    .doAction('.preventDefault')
-    .scan([], function( keys, e ){
-        var index = keys.indexOf(e.keyCode);
-        if(e.type === 'keyup' || e.type === 'blur' && index > -1){
-            keys = [];
-        }else if(e.type === 'keydown' && index === -1){
-            keys.push(e.keyCode);
-        }
-        return keys;
+//.doAction('.preventDefault')
+.scan([], function( keys, e ){
+    var index = keys.map(function(e){ return e.keyCode; }).indexOf(e.keyCode);
+    if(e.type === 'keyup' || e.type === 'blur' && index > -1){
+        keys = [];
+    }else if(e.type === 'keydown' && index === -1){
+        keys.push(e);
+    }
+    return keys;
+})
+.filter(filterMappedKeys)
+.doAction(function(events){
+    events.forEach(function(e){
+        e.preventDefault();
     });
+})
+.map(function(events){
+    return events.map(function(e){ return e.keyCode; });
+});
 
 var keyMap = {
     '8': 'backspace',
