@@ -2,18 +2,21 @@ var $editor = document.getElementById('editor');
 var isFocused = false;
 var keyups = Bacon.fromEventTarget(document.body, 'keyup');
 var keydowns = Bacon.fromEventTarget(document.body, 'keydown');
+var keypresses = Bacon.fromEventTarget(document.body, 'keypress');
 var blurWindow = Bacon.fromEventTarget(window, 'blur');
+var allKeyEvents = Bacon.mergeAll(keyups, keydowns, blurWindow, keypresses);
+
 var selectionChanges = Bacon.fromEventTarget(document, 'selectionchange');
 var caretChanges = selectionChanges.filter('.type', 'Caret');
 
 var filterMappedKeys = function(keys){
-    return Object.keys(keyMap).indexOf(keys.map(function(e){ return e.keyCode; }).join('+')) > -1;
-};
-
-var not = function(func){
-    return function(){
-        return !func.apply(this, arguments);
-    };
+    var availableKeys = Object.keys(keyMap);
+    if(keys.length > 0){
+        // If keycombination is unavailable look for last key 
+        // (When typing fast you might have overlapping key events)
+        return availableKeys.indexOf(keys.map(function(e){ return e.keyCode; }).join('+')) > -1 ||
+               availableKeys.indexOf(keys[keys.length - 1].keyCode.toString()) > -1;
+    }
 };
 
 caretChanges.assign(function(e){
@@ -29,9 +32,17 @@ var isEqual = function(a,b){
     return a.keyCode == b.keyCode && a.type == b.type;
 };
 
-var keysPressed = Bacon.mergeAll(keyups, keydowns, blurWindow)
-//.doAction('.preventDefault')
+
+var preventUnsafeKeys = function(e){
+    if(safeKeys.indexOf(e.keyCode) < 0){
+        e.preventDefault();
+    }
+};
+
+var keysPressed = allKeyEvents
+.doAction(preventUnsafeKeys)
 .scan([], function( keys, e ){
+    console.log(e.keyCode);
     var index = keys.map(function(e){ return e.keyCode; }).indexOf(e.keyCode);
     if(e.type === 'keyup' || e.type === 'blur' && index > -1){
         keys = [];
@@ -41,14 +52,13 @@ var keysPressed = Bacon.mergeAll(keyups, keydowns, blurWindow)
     return keys;
 })
 .filter(filterMappedKeys)
-.doAction(function(events){
-    events.forEach(function(e){
-        e.preventDefault();
-    });
-})
 .map(function(events){
     return events.map(function(e){ return e.keyCode; });
 });
+
+
+// Don't prevent these keys
+var safeKeys = [ 16, 17, 37, 38, 39, 40];
 
 var keyMap = {
     '8': 'backspace',
@@ -241,6 +251,7 @@ var commands = {
             this.create();
         }
         var editingItem = doc[cursor[0]];
+        console.log('val', val);
         editingItem.textContent = editingItem.textContent.substr(0, cursor[1]) + val + editingItem.textContent.substr(cursor[1], editingItem.textContent.length-1);
         cursor[1]+= val.length;
         render();
@@ -303,7 +314,6 @@ var render = function(){
             setCursor(el, cursor[1]);
         }
     });
-
 };
 
 $editor.addEventListener('blur', function(e){
