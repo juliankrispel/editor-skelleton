@@ -64,6 +64,7 @@ var keyMap = {
     '8': 'backspace',
     '13': 'enter',
     '17': 'ctrl',
+    '17+8': 'deleteLastWord',
     '49': '1',
     '16+49': '!',
     '50': '2',
@@ -173,6 +174,8 @@ var commands = {
         this.create();
     },
     reload: function(){ window.location.reload(); },
+    deleteLastWord: function(){
+    },
     cut: function(){
         var userSelection = window.getSelection();
         window.u = userSelection;
